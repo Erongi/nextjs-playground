@@ -2,7 +2,8 @@ import Head from 'next/head'
 import clientPromise from '../lib/mongodb'
 import type { InferGetServerSidePropsType, GetServerSideProps } from 'next'
 import Layout from '../components/Layout'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
+
 type ConnectionStatus = {
   isConnected: boolean
 }
@@ -12,9 +13,9 @@ type Props = {
 }
 
 type Post = {
-  _id: String;
-  title: String;
-  content: String;
+  _id: string;
+  title: string;
+  content: string;
 }
 
 
@@ -23,7 +24,7 @@ export const getServerSideProps: GetServerSideProps<any> = async () => {
     let response = await fetch(`http://localhost:3000/api/getPosts`)
     let posts = await response.json()
     return {
-      props: { posts: JSON.parse(JSON.stringify(posts)) }
+      props: { posts }
     }
   } catch (e) {
     console.error(e)
@@ -35,6 +36,37 @@ export const getServerSideProps: GetServerSideProps<any> = async () => {
 
 export default function Home(props: Props) {
   const [posts, setPosts] = useState<[Post]>(props.posts)
+  const handleGetPosts = useCallback(async() => {
+    try {
+      let response = await fetch(`http://localhost:3000/api/getPosts`)
+      let posts = await response.json()
+      setPosts(posts)
+    } catch (e) {
+      console.error(e)
+      return {
+        props: { isConnected: false },
+      }
+    }
+  },[])
+
+  const handleDelete = useCallback(async(id) => {
+    try {
+      let response = await fetch("http://localhost:3000/api/deletePost?id=" + id, {
+        method: "POST",
+        headers: {
+          Accept: "application/json, text/plain, */*",
+          "Content-Type": "application/json"
+        }
+      })
+      response = await response.json()
+      await handleGetPosts()
+    } catch (e) {
+      console.error(e)
+      return {
+        props: { isConnected: false },
+      }
+    }
+  },[])
 
   return (
     <div className="container">
@@ -56,8 +88,8 @@ export default function Home(props: Props) {
                       <p>{post.content}</p>
                     </div>
                     <div className="post-item-actions">
-                      <a href="#">Edit</a>
-                      <button>Delete</button>
+                      <a href={`/posts/${post._id}`}>Edit</a>
+                      <button onClick={() => handleDelete(post._id)}>Delete</button>
                     </div>
                   </li>
                 )
@@ -79,6 +111,32 @@ export default function Home(props: Props) {
       </footer>
 
       <style jsx>{`
+      
+        .posts-body {
+          width: 400px;
+          margin: 10px auto;
+        }
+
+        .posts-body-heading {
+          font-family: sans-serif;
+        }
+
+        .posts-list {
+          list-style: none;
+          display: block
+        }
+
+        .post-item {
+          width: 100%;
+          padding: 10px;
+          border: 1px solid black
+        }
+
+        .post-item-actions {
+          display: flex;
+          justify-content: space-between;
+        }
+
         footer {
           width: 100%;
           height: 100px;

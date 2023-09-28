@@ -7,7 +7,7 @@ function Navbar() {
       <div className={styles.navItems}>
         <ul>
             <li><a href="/">My Posts</a></li>
-            <li><a href="/">Add Posts</a></li>
+            <li><a href="/posts">Add Posts</a></li>
         </ul>
       </div>
     </nav>
